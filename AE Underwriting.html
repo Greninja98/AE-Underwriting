@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AE Financial & Medical Underwriting Calculator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: #2c3e50; }
+        p.subtitle { text-align: center; color: #666; font-style: italic; }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #777;
+            outline: none;
+        }
+        .tab-button.active {
+            color: #d32f2f;
+            border-bottom: 3px solid #d32f2f;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .form-group label {
+            flex: 2;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group .factor-display {
+            flex: 0.5;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+        }
+        .form-group .factor-display select {
+            padding: 4px;
+            font-size: 0.9em;
+            width: 80%;
+        }
+        .form-group .result-display {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            color: #d32f2f;
+            font-size: 1.2em;
+        }
+
+        .total-box {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .final-result {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #d32f2f;
+            border-top: 1px solid #bcd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        /* Medical Table */
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .med-table th, .med-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .med-table th {
+            background-color: #f2f2f2;
+        }
+        .status-pass {
+            color: green;
+            font-weight: bold;
+        }
+        .status-fail {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Image Section */
+        .image-section {
+            margin-top: 40px;
+            text-align: center;
+            border-top: 2px dashed #ccc;
+            padding-top: 20px;
+        }
+        .image-upload-btn {
+            margin-bottom: 20px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none; /* Hidden until image selected */
+            margin: 0 auto;
+        }
+        .placeholder-box {
+            background: #eee;
+            padding: 40px;
+            color: #888;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Underwriting Calculator</h1>
+    <p class="subtitle">Financial & Medical Assessment Tool</p>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('financial')">Financial Underwriting</button>
+        <button class="tab-button" onclick="openTab('medical')">Medical Underwriting</button>
+    </div>
+
+    <div id="financial" class="tab-content active">
+        <div class="form-group">
+            <label for="ageBand">Client Age Band:</label>
+            <select id="ageBand" onchange="calculateFinancial()">
+                <option value="16-40">16 to 40</option>
+                <option value="41-50">41 to 50</option>
+                <option value="51-55">51 to 55</option>
+                <option value="56-60" selected>56 to 60</option>
+                <option value="61-70">61 to 70</option>
+            </select>
+            <div style="flex: 1.5; text-align: right; font-size: 0.9em; color: #555;">
+                Life Factor: <span id="lifeFactorDisplay">15</span> | CI Factor: <span id="ciFactorDisplay">8</span>
+            </div>
+        </div>
+
+        <div class="section-title">Riders & Sum Assured</div>
+        <div class="header-row" style="display: flex; margin-bottom: 10px; font-weight: bold; color: #555; font-size: 0.9em;">
+            <div style="flex: 2;">Rider Name</div>
+            <div style="flex: 1;">Sum Assured</div>
+            <div style="flex: 0.5; text-align: center;">Factor</div>
+            <div style="flex: 1; text-align: right;">Life/TPD UW</div>
+            <div style="flex: 1; text-align: right;">CI UW</div>
+        </div>
+
+        <div class="form-group">
+            <label>Life</label>
+            <input type="number" id="sa_life" value="350000" oninput="calculateFinancial()">
+            <div class="factor-display">x 1.0</div>
+            <div class="result-display" id="res_life">350,000</div>
+            <div class="result-display">-</div>
+        </div>
+        <div class="form-group">
+            <label>Complimentary Disability</label>
+            <input type="number" id="sa_comp_dis" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">x 0.5</div>
+            <div class="result-display" id="res_comp_dis">0</div>
+            <div class="result-display">-</div>
+        </div>
+        <div class="form-group">
+            <label>DLSR</label>
+            <input type="number" id="sa_dlsr" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">x 0.5</div>
+            <div class="result-display" id="res_dlsr">0</div>
+            <div class="result-display">-</div>
+        </div>
+        <div class="form-group">
+            <label>Comp. Elder Care & Cancer Rec.</label>
+            <input type="number" id="sa_elder" value="350000" oninput="calculateFinancial()">
+            <div class="factor-display">0.4 / 0.2</div>
+            <div class="result-display" id="res_elder_life">140,000</div>
+            <div class="result-display" id="res_elder_ci">70,000</div>
+        </div>
+        <div class="form-group">
+            <label>TPDWP (Annual Limit)</label>
+            <input type="number" id="sa_tpdwp" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">
+                <select id="factor_tpdwp" onchange="calculateFinancial()">
+                    <option value="4">x 4</option>
+                    <option value="8">x 8</option>
+                </select>
+            </div>
+            <div class="result-display" id="res_tpdwp">0</div>
+            <div class="result-display">-</div>
+        </div>
+        <div class="form-group">
+            <label>180 CI</label>
+            <input type="number" id="sa_180ci" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">x 1.5</div>
+            <div class="result-display">-</div>
+            <div class="result-display" id="res_180ci">0</div>
+        </div>
+        <div class="form-group">
+            <label>48 CI / Power CI</label>
+            <input type="number" id="sa_48ci" value="800000" oninput="calculateFinancial()">
+            <div class="factor-display">x 1.0</div>
+            <div class="result-display">-</div>
+            <div class="result-display" id="res_48ci">800,000</div>
+        </div>
+        <div class="form-group">
+            <label>CIWP (Annual Limit)</label>
+            <input type="number" id="sa_ciwp" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">
+                <select id="factor_ciwp" onchange="calculateFinancial()">
+                    <option value="4">x 4</option>
+                    <option value="8">x 8</option>
+                </select>
+            </div>
+            <div class="result-display">-</div>
+            <div class="result-display" id="res_ciwp">0</div>
+        </div>
+        <div class="form-group">
+            <label>Future Secure Rider</label>
+            <input type="number" id="sa_future" value="0" oninput="calculateFinancial()">
+            <div class="factor-display">x 1.0</div>
+            <div class="result-display" id="res_future">0</div>
+            <div class="result-display">-</div>
+        </div>
+
+        <div class="total-box">
+            <div class="result-row">
+                <span>Total Life / TPD Underwriting Value:</span>
+                <span id="total_life_uw">490,000</span>
+            </div>
+            <div class="result-row">
+                <span>Total CI Underwriting Value:</span>
+                <span id="total_ci_uw">870,000</span>
+            </div>
+            <hr>
+            <div class="result-row">
+                <span>Min. Annual Income Req (Life):</span>
+                <span id="req_income_life">--</span>
+            </div>
+            <div class="result-row">
+                <span>Min. Annual Income Req (CI):</span>
+                <span id="req_income_ci">--</span>
+            </div>
+            <div class="final-result">
+                Maximum Income Required: <span id="max_req_income">--</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="medical" class="tab-content">
+        <div class="form-group">
+            <label>Age (Last Birthday):</label>
+            <input type="number" id="med_age" value="30" oninput="calculateMedical()">
+        </div>
+        
+        <div class="form-group">
+            <label>Total Sum Assured:</label>
+            <input type="text" id="med_sa" value="1,000,000" oninput="formatNumberInput(this); calculateMedical()" placeholder="0">
+        </div>
+
+        <div class="total-box">
+            <div class="result-row">
+                <span>Non-Medical Limit:</span>
+                <span id="limit_std">--</span>
+            </div>
+            <div class="result-row">
+                <span>Status:</span>
+                <span id="status_std">--</span>
+            </div>
+        </div>
+
+        <div class="section-title">Non-Medical Limit Table</div>
+        <table class="med-table">
+            <thead>
+                <tr>
+                    <th>Age Band</th>
+                    <th>Non-Medical Limit</th>
+                    <th>Requirement</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>0 - 5</td><td>800,000</td><td>> 800k Need Check</td></tr>
+                <tr><td>6 - 40</td><td>1,000,000</td><td>> 1.0M Need Check</td></tr>
+                <tr><td>41 - 50</td><td>800,000</td><td>> 800k Need Check</td></tr>
+                <tr><td>51 - 55</td><td>400,000</td><td>> 400k Need Check</td></tr>
+                <tr><td>56 - 60</td><td>200,000</td><td>> 200k Need Check</td></tr>
+                <tr><td>65 Above</td><td>0</td><td>Always Need Check</td></tr>
+            </tbody>
+        </table>
+
+        <div class="image-section">
+            <h3>Reference Chart</h3>
+            <p style="font-size:0.9em; color:#666;">Click below to load your reference picture:</p>
+            <input type="file" id="imageLoader" accept="image/*" class="image-upload-btn">
+            
+            <div id="placeholder" class="placeholder-box">
+                No image loaded.
+            </div>
+            <img id="imagePreview" alt="Reference Chart" />
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- UTILITIES ---
+    // Format number input with commas
+    function formatNumberInput(input) {
+        // Remove existing non-numeric chars (except decimal if needed, but here we assume integers for SA)
+        let val = input.value.replace(/[^0-9]/g, '');
+        if (val === '') {
+            input.value = '';
+            return;
+        }
+        // Format with commas
+        input.value = parseInt(val).toLocaleString('en-US');
+    }
+
+    // Get raw number from formatted input
+    function getRawValue(id) {
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        // If it's the text input with commas
+        if (el.type === 'text') {
+            return parseFloat(el.value.replace(/,/g, '')) || 0;
+        }
+        return parseFloat(el.value) || 0;
+    }
+
+    // --- FINANCIAL CALCULATOR LOGIC ---
+    const ageFactors = {
+        "16-40": { life: 30, ci: 20 }, 
+        "41-50": { life: 25, ci: 15 },
+        "51-55": { life: 20, ci: 10 },
+        "56-60": { life: 15, ci: 8 },
+        "61-70": { life: 10, ci: 5 }
+    };
+
+    function calculateFinancial() {
+        const ageBand = document.getElementById('ageBand').value;
+        const factors = ageFactors[ageBand];
+        document.getElementById('lifeFactorDisplay').innerText = factors.life;
+        document.getElementById('ciFactorDisplay').innerText = factors.ci;
+
+        const v = (id) => getRawValue(id);
+        
+        const sa_life = v('sa_life');
+        const sa_comp_dis = v('sa_comp_dis');
+        const sa_dlsr = v('sa_dlsr');
+        const sa_elder = v('sa_elder');
+        const sa_tpdwp = v('sa_tpdwp');
+        const sa_180ci = v('sa_180ci');
+        const sa_48ci = v('sa_48ci');
+        const sa_ciwp = v('sa_ciwp');
+        const sa_future = v('sa_future');
+
+        const fac_tpdwp = parseFloat(document.getElementById('factor_tpdwp').value) || 4;
+        const fac_ciwp = parseFloat(document.getElementById('factor_ciwp').value) || 4;
+
+        const uw_life_life = sa_life * 1.0;
+        const uw_comp_life = sa_comp_dis * 0.5;
+        const uw_dlsr_life = sa_dlsr * 0.5;
+        const uw_elder_life = sa_elder * 0.4;
+        const uw_tpdwp_life = sa_tpdwp * fac_tpdwp;
+        const uw_future_life = sa_future * 1.0;
+
+        const uw_elder_ci = sa_elder * 0.2;
+        const uw_180ci_ci = sa_180ci * 1.5;
+        const uw_48ci_ci = sa_48ci * 1.0;
+        const uw_ciwp_ci = sa_ciwp * fac_ciwp;
+
+        const fmt = (n) => n.toLocaleString('en-US', {maximumFractionDigits: 0});
+        
+        document.getElementById('res_life').innerText = fmt(uw_life_life);
+        document.getElementById('res_comp_dis').innerText = fmt(uw_comp_life);
+        document.getElementById('res_dlsr').innerText = fmt(uw_dlsr_life);
+        document.getElementById('res_elder_life').innerText = fmt(uw_elder_life);
+        document.getElementById('res_elder_ci').innerText = fmt(uw_elder_ci);
+        document.getElementById('res_tpdwp').innerText = fmt(uw_tpdwp_life);
+        document.getElementById('res_180ci').innerText = fmt(uw_180ci_ci);
+        document.getElementById('res_48ci').innerText = fmt(uw_48ci_ci);
+        document.getElementById('res_ciwp').innerText = fmt(uw_ciwp_ci);
+        document.getElementById('res_future').innerText = fmt(uw_future_life);
+
+        const totalLifeUW = uw_life_life + uw_comp_life + uw_dlsr_life + uw_elder_life + uw_tpdwp_life + uw_future_life;
+        const totalCiUW = uw_elder_ci + uw_180ci_ci + uw_48ci_ci + uw_ciwp_ci;
+
+        document.getElementById('total_life_uw').innerText = fmt(totalLifeUW);
+        document.getElementById('total_ci_uw').innerText = fmt(totalCiUW);
+
+        const reqLife = totalLifeUW / factors.life;
+        const reqCi = totalCiUW / factors.ci;
+
+        document.getElementById('req_income_life').innerText = fmt(reqLife);
+        document.getElementById('req_income_ci').innerText = fmt(reqCi);
+        
+        document.getElementById('max_req_income').innerText = fmt(Math.max(reqLife, reqCi));
+    }
+
+    // --- MEDICAL CALCULATOR LOGIC ---
+    function calculateMedical() {
+        const age = parseFloat(document.getElementById('med_age').value) || 0;
+        const sa = getRawValue('med_sa'); // Uses helper to strip commas
+        
+        let limit = 0;
+
+        // Logic
+        if (age >= 0 && age <= 5) {
+            limit = 800000;
+        } else if (age >= 6 && age <= 40) {
+            limit = 1000000;
+        } else if (age >= 41 && age <= 50) {
+            limit = 800000;
+        } else if (age >= 51 && age <= 55) {
+            limit = 400000;
+        } else if (age >= 56 && age <= 60) {
+            limit = 200000;
+        } else {
+            limit = 0; // 61+ or out of bands
+        }
+
+        const fmt = (n) => n.toLocaleString('en-US');
+
+        if (limit === 0) {
+             document.getElementById('limit_std').innerText = "0 (Medical Required)";
+        } else {
+             document.getElementById('limit_std').innerText = fmt(limit);
+        }
+        
+        const statusEl = document.getElementById('status_std');
+
+        if (sa === 0) {
+            statusEl.innerText = "--";
+            statusEl.className = "";
+            return;
+        }
+
+        if (limit > 0 && sa <= limit) {
+            statusEl.innerText = "Pass (No Medicals)";
+            statusEl.className = "status-pass";
+        } else {
+            statusEl.innerText = "Medical Required";
+            statusEl.className = "status-fail";
+        }
+    }
+
+    // --- IMAGE LOADER ---
+    document.getElementById('imageLoader').addEventListener('change', function(e) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('imagePreview');
+            var placeholder = document.getElementById('placeholder');
+            output.src = reader.result;
+            output.style.display = 'block';
+            placeholder.style.display = 'none';
+        };
+        if(e.target.files[0]){
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // --- TABS ---
+    function openTab(tabName) {
+        const x = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < x.length; i++) {
+            x[i].classList.remove("active");
+        }
+        const y = document.getElementsByClassName("tab-button");
+        for (let i = 0; i < y.length; i++) {
+            y[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        event.currentTarget.classList.add("active");
+    }
+
+    // Init
+    calculateFinancial();
+    calculateMedical();
+</script>
+
+</body>
+</html>
