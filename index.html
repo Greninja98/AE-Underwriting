@@ -20,6 +20,35 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        
+        /* Login Specific Styles */
+        #login-container {
+            max-width: 400px;
+            margin-top: 100px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            background-color: #b71c1c;
+        }
+        .error-msg {
+            color: red;
+            text-align: center;
+            display: none;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
         h1 { text-align: center; color: #2c3e50; }
         p.subtitle { text-align: center; color: #666; font-style: italic; }
 
@@ -56,6 +85,17 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+        }
+        .form-group.col {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .form-group.col label {
+            margin-bottom: 5px;
+        }
+        .form-group.col input {
+            width: 100%;
+            box-sizing: border-box;
         }
         .form-group label {
             flex: 2;
@@ -157,7 +197,7 @@
             border: 1px solid #ddd;
             padding: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: none; /* Hidden until image selected */
+            display: none; 
             margin: 0 auto;
         }
         .placeholder-box {
@@ -170,7 +210,26 @@
 </head>
 <body>
 
-<div class="container">
+<div id="login-container" class="container">
+    <h1>System Login</h1>
+    <p class="subtitle">Please enter your credentials to access the calculator</p>
+    
+    <div class="form-group col">
+        <label for="loginId">User ID:</label>
+        <input type="text" id="loginId" placeholder="Enter ID">
+    </div>
+    
+    <div class="form-group col">
+        <label for="loginPwd">Password:</label>
+        <input type="password" id="loginPwd" placeholder="Enter Password">
+    </div>
+    
+    <div id="login-error" class="error-msg">Invalid User ID or Password. Please try again.</div>
+    
+    <button class="login-btn" onclick="checkLogin()">Login</button>
+</div>
+
+<div id="main-app" class="container" style="display: none;">
     <h1>Underwriting Calculator</h1>
     <p class="subtitle">Financial & Medical Assessment Tool</p>
 
@@ -353,20 +412,48 @@
             <img id="imagePreview" alt="Reference Chart" />
         </div>
     </div>
-
 </div>
 
 <script>
+    // --- LOGIN LOGIC ---
+    function checkLogin() {
+        const idInput = document.getElementById('loginId').value;
+        const pwdInput = document.getElementById('loginPwd').value;
+        const errorMsg = document.getElementById('login-error');
+
+        // Modify these strings to change the required ID and Password
+        const validId = "admin";
+        const validPwd = "123456";
+
+        if (idInput === validId && pwdInput === validPwd) {
+            // Hide login, show main app
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            
+            // Initialize calculator once logged in
+            calculateFinancial();
+            calculateMedical();
+        } else {
+            // Show error message
+            errorMsg.style.display = 'block';
+        }
+    }
+
+    // Add support for pressing "Enter" to login
+    document.getElementById('loginPwd').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            checkLogin();
+        }
+    });
+
     // --- UTILITIES ---
     // Format number input with commas
     function formatNumberInput(input) {
-        // Remove existing non-numeric chars (except decimal if needed, but here we assume integers for SA)
         let val = input.value.replace(/[^0-9]/g, '');
         if (val === '') {
             input.value = '';
             return;
         }
-        // Format with commas
         input.value = parseInt(val).toLocaleString('en-US');
     }
 
@@ -374,7 +461,6 @@
     function getRawValue(id) {
         const el = document.getElementById(id);
         if (!el) return 0;
-        // If it's the text input with commas
         if (el.type === 'text') {
             return parseFloat(el.value.replace(/,/g, '')) || 0;
         }
@@ -454,11 +540,10 @@
     // --- MEDICAL CALCULATOR LOGIC ---
     function calculateMedical() {
         const age = parseFloat(document.getElementById('med_age').value) || 0;
-        const sa = getRawValue('med_sa'); // Uses helper to strip commas
+        const sa = getRawValue('med_sa'); 
         
         let limit = 0;
 
-        // Logic
         if (age >= 0 && age <= 5) {
             limit = 800000;
         } else if (age >= 6 && age <= 40) {
@@ -470,7 +555,7 @@
         } else if (age >= 56 && age <= 60) {
             limit = 200000;
         } else {
-            limit = 0; // 61+ or out of bands
+            limit = 0;
         }
 
         const fmt = (n) => n.toLocaleString('en-US');
@@ -526,10 +611,6 @@
         document.getElementById(tabName).classList.add("active");
         event.currentTarget.classList.add("active");
     }
-
-    // Init
-    calculateFinancial();
-    calculateMedical();
 </script>
 
 </body>
